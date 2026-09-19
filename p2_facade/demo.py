@@ -1,6 +1,14 @@
-"""Demo del patron Facade: una sola llamada orquesta todo el proceso de compra."""
+"""Ejemplo ejecutable del patrón Facade aplicado a una compra."""
+
+from __future__ import annotations
+
+import logging
+import sys
+
 from comun.producto import ProductoSimple
+from p1_adapter.adapters import PayPalAdapter
 from p1_adapter.payment_processor import PaymentProcessor
+from p1_adapter.sistemas_externos import PayPalService
 from p2_facade.proceso_compra_facade import ProcesoCompraFacade
 from p2_facade.subsistemas import (
     EnvioService,
@@ -9,40 +17,44 @@ from p2_facade.subsistemas import (
     NotificacionService,
 )
 
-try:
-    from p1_adapter.adapters import PayPalAdapter
-    from p1_adapter.sistemas_externos import PayPalService
 
-    def _crear_procesador_pago() -> PaymentProcessor:
-        return PayPalAdapter(PayPalService())
-
-except ImportError:
-
-    class _PaymentProcessorRespaldo(PaymentProcessor):
-        """Respaldo minimo para que la demo funcione si el Adapter aun no existe."""
-
-        def procesar_pago(self, monto: float) -> bool:
-            print(f"[PagoRespaldo] Pago simulado por Q{monto:.2f}")
-            return True
-
-    def _crear_procesador_pago() -> PaymentProcessor:
-        return _PaymentProcessorRespaldo()
+def _crear_procesador_pago() -> PaymentProcessor:
+    """Construye el adaptador de pago usado por la demostración."""
+    return PayPalAdapter(PayPalService())
 
 
-def demo() -> None:
-    facade = ProcesoCompraFacade(
-        InventarioService(),
-        FacturaService(),
-        EnvioService(),
-        NotificacionService(),
+def _crear_facade() -> ProcesoCompraFacade:
+    """Crea el Facade e inyecta todas sus dependencias."""
+    return ProcesoCompraFacade(
+        inventario=InventarioService(),
+        procesador_pago=_crear_procesador_pago(),
+        factura=FacturaService(),
+        envio=EnvioService(),
+        notificacion=NotificacionService(),
     )
-    producto = ProductoSimple("Camisa tipica", 150.0)
-    procesador_pago = _crear_procesador_pago()
+
+
+def main() -> None:
+    """Ejecuta una compra de ejemplo mediante una sola operación."""
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(message)s",
+        stream=sys.stdout,
+    )
+
+    facade = _crear_facade()
+    producto = ProductoSimple("Camisa típica", 150.0)
 
     print("=== Demo Facade: compra con una sola llamada ===")
-    exito = facade.realizar_compra("Jordin", producto, 2, procesador_pago)
-    print(f"Resultado de la compra: {'EXITOSA' if exito else 'FALLIDA'}")
+    compra_exitosa = facade.realizar_compra(
+        cliente="Jordin",
+        producto=producto,
+        cantidad=2,
+    )
+
+    resultado = "EXITOSA" if compra_exitosa else "FALLIDA"
+    print(f"Resultado de la compra: {resultado}")
 
 
 if __name__ == "__main__":
-    demo()
+    main()
