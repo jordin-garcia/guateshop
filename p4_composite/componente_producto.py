@@ -18,10 +18,24 @@ class ComboProducto(ComponenteProducto):
         self.nombre = nombre
         self._hijos: list[Producto] = []
 
+    def _contiene(self, otro: Producto) -> bool:
+        """True si `otro` está en cualquier nivel del árbol bajo este combo."""
+        return any(
+            hijo is otro or (isinstance(hijo, ComboProducto) and hijo._contiene(otro))
+            for hijo in self._hijos
+        )
+
     def agregar(self, producto: Producto) -> None:
+        # Un combo que se contiene a sí mismo (directa o indirectamente) haría que
+        # obtener_precio y obtener_descripcion recursen sin fin.
+        if producto is self or (
+            isinstance(producto, ComboProducto) and producto._contiene(self)
+        ):
+            raise ValueError("No se puede agregar un combo dentro de sí mismo.")
         self._hijos.append(producto)
 
     def eliminar(self, producto: Producto) -> None:
+        """Quita el producto; lanza ValueError si no está en este combo."""
         self._hijos.remove(producto)
 
     def obtener_precio(self) -> float:
