@@ -1,7 +1,6 @@
 """Contrato común de producto.
 
-Lo comparten Decorator (Integrante 3), Composite (Integrante 3) y Facade
-(Integrante 2). Tanto los decoradores como los combos deben heredar de
+Lo comparten Decorator, Composite y Facade. Tanto los decoradores como los combos deben heredar de
 `Producto` para poder usarse en cualquier parte del sistema.
 """
 from abc import ABC, abstractmethod
