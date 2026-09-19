@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+
+# Entregables que se envian por separado, no van al repositorio
+GuateShop_Documento_Tecnico.docx
+GuateShop_Presentacion.pptx
